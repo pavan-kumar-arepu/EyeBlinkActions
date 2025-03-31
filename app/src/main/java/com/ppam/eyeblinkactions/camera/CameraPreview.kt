@@ -1,6 +1,7 @@
 package com.ppam.eyeblinkactions.camera
 
 import android.content.Context
+import android.util.Log
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,10 +41,53 @@ fun CameraPreview(
                 processImage(context, imageProxy, onBlinkDetected)
             }
 
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner, cameraSelector, preview, imageAnalysis
-            )
+            try {
+                cameraProvider.unbindAll() // Unbind previous instances before rebinding
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner, cameraSelector, preview, imageAnalysis
+                )
+            } catch (exc: Exception) {
+                Log.e("CameraPreview", "Use case binding failed", exc)
+            }
         }, ContextCompat.getMainExecutor(context))
+    }
+}
+
+object CameraManager {
+
+    private var cameraProvider: ProcessCameraProvider? = null
+
+    fun startBlinkDetection(context: Context, lifecycleOwner: LifecycleOwner?, onBlinkDetected: (Int) -> Unit) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
+        cameraProviderFuture.addListener({
+            cameraProvider = cameraProviderFuture.get()
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                .build()
+
+            val preview = Preview.Builder().build()
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+
+            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                processImage(context, imageProxy, onBlinkDetected)
+            }
+
+            cameraProvider?.unbindAll()
+
+            // ✅ Pass lifecycleOwner if available
+            if (lifecycleOwner != null) {
+                cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalysis)
+            } else {
+                Log.e("CameraManager", "LifecycleOwner is null. Cannot start camera.")
+            }
+
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    fun stopBlinkDetection() {
+        cameraProvider?.unbindAll()  // Stops the camera when service stops
     }
 }

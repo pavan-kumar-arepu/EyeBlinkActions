@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -48,6 +50,9 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.0")
     implementation("androidx.core:core-ktx:1.12.0")
 
+    implementation("androidx.work:work-runtime-ktx:2.9.0") // To manager worker
+
+
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.1") // For Preview
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.1") // For interactive preview
 
@@ -66,4 +71,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.lifecycle:lifecycle-service:2.7.0")
+
 }

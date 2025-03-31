@@ -1,4 +1,10 @@
 package com.ppam.eyeblinkactions.utils
 
-class BatteryOptimization {
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+
+fun requestBatteryOptimization(context: Context) {
+    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+    context.startActivity(intent)
 }

@@ -20,7 +20,7 @@ import androidx.compose.material3.*
 @Composable
 fun EyeBlinkApp() {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
+    LocalContext.current
 
     var blinkCount by remember { mutableStateOf(0) }
     var isCameraPermissionGranted by remember { mutableStateOf(false) }
