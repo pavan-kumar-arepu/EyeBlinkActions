@@ -116,10 +116,13 @@ class MainActivity : ComponentActivity() {
     /**
      * Starts the Foreground Service for continuous blink detection.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun startBlinkDetectionService() {
         val serviceIntent = Intent(this, BlinkDetectionService::class.java)
+        startForegroundService(serviceIntent)  // Start as foreground service
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)  // Start as foreground service
+//            startForegroundService(serviceIntent)  // Start as foreground service
         } else {
             startService(serviceIntent)
         }
