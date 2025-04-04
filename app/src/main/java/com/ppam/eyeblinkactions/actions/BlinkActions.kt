@@ -61,7 +61,6 @@ private fun playRingtone(context: Context) {
                 stopRingtone() // Ensure ringtone stops properly
             }
             start()
-//            Toast.makeText(context, "Playing Bell 🔔", Toast.LENGTH_SHORT).show()
         }
         Log.d("Ringtone", "Playing ringtone")
         isRingtonePlaying = true
