@@ -21,16 +21,17 @@ import com.ppam.eyeblinkactions.service.BlinkDetectionService
 import com.ppam.eyeblinkactions.ui.EyeBlinkApp
 import com.ppam.eyeblinkactions.ui.theme.EyeBlinkActionsTheme
 import com.ppam.eyeblinkactions.worker.BlinkWorker
-import com.ppam.eyeblinkactions.actions.stopRingtone
 import com.ppam.eyeblinkactions.service.releaseHandler
 import com.ppam.eyeblinkactions.service.releaseWakeLock
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.ContextCompat.startForegroundService
+import com.ppam.eyeblinkactions.service.acquireWakeLock
 
 
 import java.util.concurrent.TimeUnit
@@ -166,7 +167,6 @@ class MainActivity : ComponentActivity() {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -177,9 +177,8 @@ class MainActivity : ComponentActivity() {
         if (!isIgnoringBatteryOptimizations()) {
             requestBatteryOptimizationPermission()
         }
-
         // Acquire Wake Lock to keep CPU running when the screen is off
-        acquireWakeLock()
+        acquireWakeLock(this)
 
         // Start Foreground Service for eye blink detection
         startBlinkDetectionService()
@@ -190,6 +189,7 @@ class MainActivity : ComponentActivity() {
         // Launch UI
         setContent {
             EyeBlinkApp()
+
         }
     }
 
@@ -225,7 +225,6 @@ class MainActivity : ComponentActivity() {
     /**
      * Checks if battery optimization is ignored for this app.
      */
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun isIgnoringBatteryOptimizations(): Boolean {
         val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         return powerManager.isIgnoringBatteryOptimizations(packageName)
@@ -248,34 +247,9 @@ class MainActivity : ComponentActivity() {
     /**
      * Starts the Foreground Service for continuous blink detection.
      */
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun startBlinkDetectionService() {
         val serviceIntent = Intent(this, BlinkDetectionService::class.java)
         startForegroundService(serviceIntent)
-    }
-
-    /**
-     * Acquires a Wake Lock to keep the CPU active in sleep mode.
-     */
-    private fun acquireWakeLock() {
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "EyeBlinkApp::WakeLockTag"
-        ).apply {
-            acquire()
-        }
-    }
-
-    /**
-     * Releases the Wake Lock when the activity is destroyed.
-     */
-    private fun releaseWakeLock() {
-        wakeLock?.let {
-            if (it.isHeld) {
-                it.release()
-            }
-        }
     }
 
     /**
@@ -295,7 +269,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        releaseWakeLock()
+            releaseWakeLock()     // 🔄 Release when app is closing
+            releaseHandler()      // ✅ Prevent memory leaks
         WorkManager.getInstance(this).cancelAllWorkByTag("BlinkDetectionWork")
     }
 }

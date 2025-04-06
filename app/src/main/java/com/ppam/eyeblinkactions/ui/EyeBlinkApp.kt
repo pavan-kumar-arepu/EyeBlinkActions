@@ -12,7 +12,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ppam.eyeblinkactions.camera.CameraPreview
 import com.ppam.eyeblinkactions.permissions.RequestCameraPermission
-import androidx.compose.ui.platform.LocalLifecycleOwner
+//import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
+
 import androidx.compose.runtime.*
 import com.ppam.eyeblinkactions.permissions.RequestCallPermission
 import androidx.compose.material3.*

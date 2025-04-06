@@ -1,20 +1,17 @@
 package com.ppam.eyeblinkactions.face
 
 import android.content.Context
-import android.os.Looper
-import android.util.Log
-import android.widget.Toast
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.*
-import com.ppam.eyeblinkactions.actions.handleBlinkAction
+import com.ppam.eyeblinkactions.actions.BlinkActionHandler
+//import com.ppam.eyeblinkactions.actions.handleBlinkAction
 
 private var lastBlinkTime = 0L
 private var blinkCounter = 0
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
-@OptIn(ExperimentalGetImage::class)
 fun processImage(context: Context, imageProxy: ImageProxy, onBlinkDetected: (Int) -> Unit) {
     val mediaImage = imageProxy.image ?: return
     val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
@@ -47,7 +44,9 @@ private fun detectBlink(context: Context, face: Face, onBlinkDetected: (Int) -> 
             blinkCounter++
             lastBlinkTime = currentTime
 
-            handleBlinkAction(context, blinkCounter)
+//            handleBlinkAction(context, blinkCounter)
+            BlinkActionHandler.handleBlinkAction(context, blinkCounter)
+
             onBlinkDetected(blinkCounter)
         }
     } else {

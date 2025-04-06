@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ppam.eyeblinkactions"
-        minSdk = 21
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -42,12 +42,18 @@ android {
 }
 
 dependencies {
+
     implementation("com.google.mlkit:face-detection:16.1.5") // ML Kit Face Detection
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // LiveData
-    implementation("androidx.camera:camera-core:1.3.0") // CameraX
-    implementation("androidx.camera:camera-camera2:1.3.0")
-    implementation("androidx.camera:camera-lifecycle:1.3.0")
-    implementation("androidx.camera:camera-view:1.3.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.0") // or latest
+
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+
+    implementation("com.google.mlkit:face-detection:16.1.5") // ML Kit Face Detection
+    implementation("androidx.camera:camera-core:1.3.1") // CameraX
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
     implementation("androidx.core:core-ktx:1.12.0")
 
     implementation("androidx.work:work-runtime-ktx:2.9.0") // To manager worker
