@@ -27,144 +27,13 @@ private var ringtone: MediaPlayer? = null
 private var isRingtonePlaying = false
 private var mediaPlayer: MediaPlayer? = null
 
-/*
-fun handleBlinkAction(context: Context, blinkCounter: Int) {
-    if (blinkCounter == 2) {
-        if (isRingtonePlaying) {
-            showBlinkAlert(context, blinkCounter, "Stop Playing Bell \uD83D\uDD14")
-            stopRingtone()
-        } else {
-            showBlinkAlert(context, blinkCounter, " Playing Bell \uD83D\uDD14")
-            playRingtone(context)
-        }
-    }
-}
-
-// Keep this function right below detectBlink()
-private fun showBlinkAlert(context: Context, blinkCount: Int, message: String) {
-    Log.d("BLINK_ALERT", "Showing toast: $blinkCount, $message") // Debug Log
-    Handler(Looper.getMainLooper()).post {
-        Toast.makeText(
-            context,
-            "Blinks detected: $blinkCount\n$message",
-            Toast.LENGTH_LONG
-        ).show()
-    }
-}
-
-
-//private fun playRingtone(context: Context) {
-//    Log.d("Ringtone", "Playing ringtone")
-//
-//    if (ringtone == null) {
-//        ringtone = MediaPlayer.create(context, R.raw.templebells).apply {
-//            isLooping = true
-//            setOnCompletionListener {
-//                stopRingtone() // Ensure ringtone stops properly
-//            }
-//            start()
-//        }
-//        Log.d("Ringtone", "Playing ringtone")
-//        isRingtonePlaying = true
-//    }
-//}
-//
-//
-// fun stopRingtone() {
-//    ringtone?.apply {
-//        if (isPlaying) {
-//            stop()
-//            release()  // Releases the MediaPlayer to free memory
-//        }
-//    }
-//    ringtone = null  // Avoid holding unnecessary references
-//    isRingtonePlaying = false
-//}
-
-private var audioManager: AudioManager? = null
-private var focusRequest: AudioFocusRequest? = null
-
-private fun playRingtone(context: Context) {
-    Log.d("Ringtone", "Attempting to play ringtone")
-
-    if (ringtone == null) {
-        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-        focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            .setAcceptsDelayedFocusGain(false)
-            .setOnAudioFocusChangeListener { focusChange ->
-                Log.d("AudioFocus", "Focus changed: $focusChange")
-            }
-            .build()
-
-        val result = audioManager?.requestAudioFocus(focusRequest!!)
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            ringtone = MediaPlayer.create(context, R.raw.templebells)?.apply {
-                isLooping = true
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                setOnCompletionListener {
-                    stopRingtone()
-                }
-                start()
-                isRingtonePlaying = true
-                Log.d("Ringtone", "Ringtone started successfully")
-            }
-        } else {
-            Log.w("Ringtone", "Audio focus not granted")
-        }
-    }
-}
-
-fun stopRingtone() {
-    ringtone?.apply {
-        if (isPlaying) {
-            stop()
-            release()
-        }
-    }
-    ringtone = null
-    isRingtonePlaying = false
-
-    focusRequest?.let {
-        audioManager?.abandonAudioFocusRequest(it)
-    }
-    audioManager = null
-    focusRequest = null
-}
-
-
-
-private fun makePhoneCall(context: Context, phoneNumber: String) {
-    val intent = Intent(Intent.ACTION_CALL).apply {
-        data = "tel:$phoneNumber".toUri()
-    }
-    context.startActivity(intent)
-}
-
-private val handler = Handler(Looper.getMainLooper())
-
-private fun releaseHandler() {
-    handler.removeCallbacksAndMessages(null)
-}
-
- */
 
 
 object BlinkActionHandler {
 
     private var soundPool: SoundPool? = null
     private var bellSoundId: Int = 0
+    private var streamId: Int = 0
     private var isBellLoaded = false
     private var isBellPlaying = false
 
@@ -172,17 +41,20 @@ object BlinkActionHandler {
 
     fun handleBlinkAction(context: Context, blinkCounter: Int) {
         if (blinkCounter == 2) {
-            if (!isBellLoaded) initSoundPool(context)
+            if (!isBellLoaded) {
+                initSoundPool(context)
+                showBlinkAlert(context, blinkCounter, "Bell is loading... 🔄")
+                return
+            }
 
             if (isBellPlaying) {
-                showBlinkAlert(context, blinkCounter, "Stop Playing Bell 🔔")
+                showBlinkAlert(context, blinkCounter, "Stopping Bell 🔕")
                 stopBell()
             } else {
                 showBlinkAlert(context, blinkCounter, "Playing Bell 🔔")
                 playBell()
             }
         }
-        // You can extend this for other blink actions like 3 blinks → call etc.
     }
 
     private fun initSoundPool(context: Context) {
@@ -196,36 +68,46 @@ object BlinkActionHandler {
             .setAudioAttributes(audioAttributes)
             .build()
 
-        bellSoundId = soundPool!!.load(context, R.raw.templebells, 1)
-        soundPool?.setOnLoadCompleteListener { _, _, status ->
-            isBellLoaded = status == 0
-            Log.d("SoundPool", "Bell loaded: $isBellLoaded")
+        soundPool?.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0 && sampleId == bellSoundId) {
+                isBellLoaded = true
+                Log.d("SoundPool", "Bell sound loaded successfully.")
+            } else {
+                Log.e("SoundPool", "Failed to load bell sound.")
+            }
         }
+
+        bellSoundId = soundPool!!.load(context.applicationContext, R.raw.templebells, 1)
     }
 
     private fun playBell() {
-        if (isBellLoaded) {
-            soundPool?.play(bellSoundId, 1f, 1f, 1, -1, 1f) // -1 → loop indefinitely
-            isBellPlaying = true
-            Log.d("SoundPool", "Bell playing")
-        } else {
-            Log.w("SoundPool", "Bell not loaded yet")
+        if (!isBellLoaded) {
+            Log.w("SoundPool", "Attempted to play before loading.")
+            return
         }
+        streamId = soundPool?.play(bellSoundId, 1f, 1f, 1, -1, 1f) ?: 0
+        isBellPlaying = true
+        Log.d("SoundPool", "Bell started (streamId=$streamId)")
     }
 
     private fun stopBell() {
-        soundPool?.stop(bellSoundId)
+        if (streamId != 0) {
+            soundPool?.stop(streamId)
+            Log.d("SoundPool", "Bell stopped (streamId=$streamId)")
+        } else {
+            Log.w("SoundPool", "No active stream to stop.")
+        }
         isBellPlaying = false
-        Log.d("SoundPool", "Bell stopped")
+        streamId = 0
     }
 
     private fun showBlinkAlert(context: Context, blinkCount: Int, message: String) {
         Log.d("BLINK_ALERT", "Showing toast: $blinkCount, $message")
         handler.post {
             Toast.makeText(
-                context,
+                context.applicationContext,
                 "Blinks detected: $blinkCount\n$message",
-                Toast.LENGTH_LONG
+                Toast.LENGTH_SHORT
             ).show()
         }
     }
@@ -235,6 +117,7 @@ object BlinkActionHandler {
         soundPool = null
         isBellLoaded = false
         isBellPlaying = false
+        streamId = 0
         handler.removeCallbacksAndMessages(null)
     }
 }
